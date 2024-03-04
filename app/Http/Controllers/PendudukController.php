@@ -22,12 +22,6 @@ class PendudukController extends Controller
      */
     public function index(Request $request)
     {
-        // $penduduks = DB::select('
-        //     SELECT penduduk.*, DATE_FORMAT(tanggal_lahir, "%d-%m-%Y") AS tanggal_lahir, sosial.nama_sosial
-        //     FROM penduduk INNER JOIN sosial ON penduduk.id_sosial = sosial.id
-        //     ORDER BY penduduk.updated_at DESC
-        // ');
-
         if ($request->ajax()) {
             try {
                 $columns = array(
@@ -54,10 +48,32 @@ class PendudukController extends Controller
                 $dir = $request->input('order.0.dir', 'asc');
 
                 if (empty($request->input('search.value'))) {
-                    $penduduks = Penduduk::offset($start)
-                        ->limit($limit)
-                        ->orderBy($order, $dir)
-                        ->get();
+                        $query = Penduduk::query()
+                            ->when(request()->filled('golDarah'), function ($q) {
+                                $q->where('golongan_darah', request('golDarah'));
+                            })
+                            ->when(request()->filled('jenisKelamin'), function ($q) {
+                                $q->where('jenis_kelamin', request('jenisKelamin'));
+                            })
+                            ->when(request()->filled('rt'), function ($q) {
+                                $q->where('rt', request('rt'));
+                            });
+
+                        $totalFiltered = $query->count();
+
+                        $orderColumnIndex = $request->input('order.0.column');
+                        $orderColumnName = $columns[$orderColumnIndex] ?? null;
+                        $orderDir = $request->input('order.0.dir');
+
+                        if ($orderColumnName) {
+                            $query->orderBy($orderColumnName, $orderDir);
+                        }
+
+                        $penduduks = $query->offset($start)
+                            ->limit($limit)
+                            ->orderBy($order, $dir)
+                            // ->latest()
+                            ->get();
                 } else {
                     $search = $request->input('search.value');
 
@@ -90,6 +106,7 @@ class PendudukController extends Controller
                         ->orWhere('keterangan', 'LIKE', "%{$search}%")
                         ->count();
                 }
+
                 $penduduks = $penduduks->map(function ($penduduk) {
                     $penduduk->action = (string) view('admin.penduduk.action', [
                         'item' => $penduduk
@@ -111,7 +128,15 @@ class PendudukController extends Controller
             return json_encode($json_data);
         }
 
-        return view('admin.penduduk.index');
+        $gol_darah = Penduduk::pluck('golongan_darah')->filter(function ($value) {
+            return $value != '-';
+        })->unique()->sort();
+
+        $jenis_kelamin = Penduduk::pluck('jenis_kelamin')->unique();
+
+        $rt = Penduduk::pluck('rt')->unique()->sort();
+
+        return view('admin.penduduk.index', compact('gol_darah', 'jenis_kelamin', 'rt'));
     }
 
     /**
@@ -132,25 +157,7 @@ class PendudukController extends Controller
      */
     public function store(StorePendudukRequest $request)
     {
-        $request->validate([
-            'no_kk' => 'required|max:16',
-            'nik' => 'required|max:16',
-            'nama' => 'required|max:128',
-            'tempat_lahir' => 'required|max:128',
-            'tanggal_lahir' => 'required',
-            'jenis_kelamin' => 'required',
-            'golongan_darah' => 'required|max:3',
-            'agama' => 'required|max:16',
-            'status_perkawinan' => 'required|max:32',
-            'status_keluarga' => 'required',
-            'pekerjaan' => 'required|max:128',
-            'alamat' => 'required|max:256',
-            'rt' => 'required|integer',
-            'keterangan' => 'required|max:128',
-            'id_sosial' => 'required',
-        ]);
-
-        Penduduk::create($request->all());
+        Penduduk::create($request->validated());
 
         return redirect()->route('penduduk.index')
             ->with('success', 'Penduduk berhasil ditambahkan');
@@ -209,25 +216,7 @@ class PendudukController extends Controller
      */
     public function update(UpdatePendudukRequest $request, string $id)
     {
-        $request->validate([
-            'no_kk' => 'required|max:16',
-            'nik' => 'required|max:16',
-            'nama' => 'required|max:128',
-            'tempat_lahir' => 'required|max:128',
-            'tanggal_lahir' => 'required',
-            'jenis_kelamin' => 'required',
-            'golongan_darah' => 'required|max:3',
-            'agama' => 'required|max:16',
-            'status_perkawinan' => 'required|max:32',
-            'status_keluarga' => 'required',
-            'pekerjaan' => 'required|max:128',
-            'alamat' => 'required|max:256',
-            'rt' => 'required|integer',
-            'keterangan' => 'required|max:128',
-            'id_sosial' => 'required',
-        ]);
-
-        Penduduk::find($id)->update($request->all());
+        Penduduk::find($id)->update($request->validated());
 
         return redirect()->route('penduduk.index')
             ->with('success', 'Penduduk berhasil diupdate');

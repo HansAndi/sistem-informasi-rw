@@ -35,6 +35,39 @@
                                 </a>
                             </div>
                         </div>
+                        <div class="row ml-2">
+                            <div class="col-2">
+                                <div class="dropdown">
+                                    <select id="golDarah" name="golDarah" class="form-control">
+                                        <option value="">Pilih Gol. Darah</option>
+                                        @foreach ($gol_darah as $item)
+                                            <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="dropdown">
+                                    <select id="jenisKelamin" name="jenisKelamin" class="form-control">
+                                        <option value="">Pilih Jenis Kelamin</option>
+                                        @foreach ($jenis_kelamin as $item)
+                                            <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="dropdown">
+                                    <select id="rt" name="rt" class="form-control">
+                                        <option value="">Pilih RT</option>
+                                        @foreach ($rt as $item)
+                                            <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="btn-reset" class="btn btn-primary">Reset</button>
+                        </div>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-bordered table-md" id="penduduk">
@@ -42,7 +75,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Nama</th>
-                                            <th class="text-nowrap">Tempat Lahir</th>
+                                            <th>Tempat Lahir</th>
                                             <th width=65px>Tgl Lahir</th>
                                             <th>JK</th>
                                             <th>Gol.</th>
@@ -55,61 +88,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {{-- @foreach ($penduduk as $key => $item)
-                                            <tr>
-                                                <td>{{ $key + 1 }}</td>
-                                                <td class="openKTP" data-toggle="modal" data-target="#ktp"
-                                                    data-nik="{{ $item->nik }}"
-                                                    data-nama="{{ $item->nama }}"
-                                                    data-tempat_lahir="{{ $item->tempat_lahir }}"
-                                                    data-tanggal_lahir="{{ $item->tanggal_lahir }}"
-                                                    data-jenis_kelamin="{{ $item->jenis_kelamin }}"
-                                                    data-golongan_darah="{{ $item->golongan_darah }}"
-                                                    data-alamat="{{ $item->alamat }}"
-                                                    data-rt="{{ $item->rt }}"
-                                                    data-agama="{{ $item->agama }}"
-                                                    data-status_perkawinan="{{ $item->status_perkawinan }}"
-                                                    data-pekerjaan="{{ $item->pekerjaan }}"
-                                                    data-keterangan="{{ $item->keterangan }}"
-                                                    data-sosial="{{ $item->nama_sosial }}">
-                                                    {{ $item->nama }}
-                                                </td>
-                                                <td>{{ $item->tempat_lahir }}</td>
-                                                <td class="text-nowrap">{{ $item->tanggal_lahir }}</td>
-                                                <td>{{ $item->jenis_kelamin }}</td>
-                                                <td>{{ $item->golongan_darah }}</td>
-                                                <td>{{ $item->agama }}</td>
-                                                <td>{{ $item->pekerjaan }}</td>
-                                                <td>{{ $item->alamat }}</td>
-                                                <td>00{{ $item->rt }}</td>
-                                                <td>{{ $item->keterangan }}</td>
-                                                <td class="text-right">
-                                                    <div class="d-flex justify-content-end">
-                                                        <button class="btn btn-sm btn-success btn-icon d-flex align-items-center justify-content-center data-link openKK" style="height: 30px; width: 30px"
-                                                            data-toggle="modal"
-                                                            data-target="#kk"
-                                                            data-value="{{ $item->no_kk }}"
-                                                            data-no_kk="{{ $item->no_kk }}"
-                                                            data-nama="{{ $item->nama }}"
-                                                            data-alamat="{{ $item->alamat }}"
-                                                            data-rt="{{ $item->rt }}">
-                                                            <i class="fas fa-user"></i>
-                                                        </button>
-                                                        <a href="{{ route('penduduk.edit', $item->id) }}" class="btn btn-sm btn-info btn-icon ml-2 mr-2 d-flex align-items-center justify-content-center" style="height: 30px; width: 30px">
-                                                            <i class="fas fa-pen"></i>
-                                                        </a>
-                                                        <form action="{{ route('penduduk.destroy', $item->id) }}"
-                                                            method="POST">
-                                                            <input type="hidden" name="_method" value="DELETE">
-                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                            <button class="btn btn-sm btn-danger btn-icon confirm-delete d-flex align-items-center justify-content-center" style="height: 30px; width: 30px">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach --}}
+
                                     </tbody>
                                 </table>
                             </div>
@@ -334,20 +313,26 @@
 @push('customScript')
     <script>
         $(document).ready(function() {
-            $('#penduduk').DataTable({
+            let table = $('#penduduk').DataTable({
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('penduduk.index') }}",
                     "dataType": "json",
                     "type": "GET",
-                    "data": {
-                        _token: "{{ csrf_token() }}"
+                    "data": function(d) {
+                        d.golDarah = $('#golDarah').val();
+                        d.jenisKelamin = $('#jenisKelamin').val();
+                        d.rt = $('#rt').val();
                     }
                 },
-                "pageLength": 25,
-                "columns": [{
+                "pageLength": 10,
+                "columns": [
+                    {
                         "data": "id",
+                        // render: function (data, type, row, meta) {
+                        //     return meta.row + meta.settings._iDisplayStart + 1;
+                        // }
                         "orderable": true,
                     },
                     {
@@ -396,6 +381,31 @@
                         "searchable": false
                     }
                 ]
+            });
+
+            $('#golDarah').change(function() {
+                table.column($(this).data('column'))
+                    .search($(this).val())
+                    .draw();
+            });
+
+            $('#jenisKelamin').change(function() {
+                table.column($(this).data('column'))
+                    .search($(this).val())
+                    .draw();
+            });
+
+            $('#rt').change(function() {
+                table.column($(this).data('column'))
+                    .search($(this).val())
+                    .draw();
+            });
+
+            $('#btn-reset').on('click', function() {
+                $('#golDarah').val('').trigger('change');
+                $('#jenisKelamin').val('').trigger('change');
+                $('#rt').val('').trigger('change');
+                table.search('').draw();
             });
         });
     </script>
