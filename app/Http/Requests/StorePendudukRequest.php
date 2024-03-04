@@ -24,7 +24,21 @@ class StorePendudukRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            'no_kk' => 'required|max:16',
+            'nik' => 'required|max:16',
+            'nama' => 'required|max:128',
+            'tempat_lahir' => 'required|max:128',
+            'tanggal_lahir' => 'required',
+            'jenis_kelamin' => 'required',
+            'golongan_darah' => 'required|max:3',
+            'agama' => 'required|max:16',
+            'status_perkawinan' => 'required|max:32',
+            'status_keluarga' => 'required',
+            'pekerjaan' => 'required|max:128',
+            'alamat' => 'required|max:256',
+            'rt' => 'required|integer',
+            'keterangan' => 'required|max:128',
+            'id_sosial' => 'required',
         ];
     }
 }
